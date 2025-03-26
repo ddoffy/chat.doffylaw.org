@@ -1,0 +1,6 @@
+[submodule "doffy-chat"]
+	path = doffy-chat
+	url = git@github.com:ddoffy/doffy-chat.git
+[submodule "rust-chat"]
+	path = rust-chat
+	url = git@github.com:ddoffy/rust-chat.git
