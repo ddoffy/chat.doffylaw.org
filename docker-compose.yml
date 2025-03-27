@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=chatapp
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chat-network
+  rust-chat:
+    build:
+      context: ./rust-chat
+    container_name: rust-chat-server
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/chatapp
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+    depends_on:
+      - db
+    ports:
+      - "8089:8089"
+    volumes:
+      - rust-chat-data:/app/data
+    networks:
+      - chat-network
+
+  doffy-chat:
+    build:
+      context: ./doffy-chat
+    container_name: doffy-chat-ui
+    restart: unless-stopped
+    ports:
+      - "3002:3000"  # Adjust port as needed
+    depends_on:
+      - rust-chat
+    environment:
+      - API_URL=http://rust-chat:8089  # Connect to backend service
+    networks:
+      - chat-network
+volumes:
+  postgres_data:
+  rust-chat-data:
+    driver: local
+
+networks:
+  chat-network:
+    driver: bridge
